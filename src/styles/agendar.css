@@ -1,0 +1,244 @@
+body {
+  background-color: #0d0d0d;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.booking-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+@media (min-width: 1025px) {
+  .Login {
+    max-width: 320px;
+    width: 90%;
+    padding: 1rem 0.8rem;
+    border-radius: 0.5rem;
+    background-color: #1e1e1e;
+    text-align: center;
+    box-shadow: 0 0 12px rgba(0,0,0,0.7);
+    box-sizing: border-box;
+  }
+
+  .Login h2 {
+    margin-bottom: 0.75rem;
+    color: #ff6b6baa;
+    font-size: 1.3rem;
+  }
+
+  .Login label {
+    display: block;
+    text-align: left;
+    margin-bottom: 0.25rem;
+    color: #eee;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .Login input,
+  .Login select {
+    width: 100%;
+    padding: 0.7rem 0.6rem;
+    margin-bottom: 0.75rem;
+    border: none;
+    border-radius: 0.4rem;
+    background-color: #333;
+    color: white;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+
+  .Login input:focus,
+  .Login select:focus {
+    outline: none;
+    background-color: #444;
+  }
+
+  .Login button {
+    width: 100%;
+    padding: 0.7rem 0;
+    background-color: #ff6b6baa;
+    color: white;
+    border: none;
+    border-radius: 0.4rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .Login button:hover {
+    background-color: #ff6b6b;
+  }
+
+  .buttons {
+    display: flex;
+    justify-content: center;
+  }
+
+  .confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 0.8rem;
+    box-sizing: border-box;
+  }
+
+  .confirmation-content {
+    background-color: #1e1e1e;
+    padding: 1rem 0.8rem;
+    border-radius: 0.5rem;
+    max-width: 280px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 0 12px rgba(0,0,0,0.7);
+    box-sizing: border-box;
+  }
+
+  .confirmation-content h3 {
+    margin-bottom: 0.75rem;
+    color: #ff6b6baa;
+    font-size: 1.1rem;
+  }
+
+  .confirmation-content p {
+    margin-bottom: 1rem;
+    color: #ccc;
+    font-size: 0.9rem;
+  }
+
+  .confirmation-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .confirm-btn,
+  .cancel-btn {
+    flex: 1;
+    padding: 0.6rem 0;
+    border-radius: 0.4rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+    color: white;
+  }
+
+  .confirm-btn {
+    background-color: #28a745;
+  }
+
+  .confirm-btn:hover {
+    background-color: #218838;
+  }
+
+  .cancel-btn {
+    background-color: #dc3545;
+  }
+
+  .cancel-btn:hover {
+    background-color: #c82333;
+  }
+
+  .link {
+    color: rgb(238, 238, 238);
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 1024px) {
+  .Login {
+    max-width: 480px;
+    width: 85%;
+    padding: 1.3rem 1rem;
+    border-radius: 0.6rem;
+  }
+
+  .Login h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .Login label {
+    font-size: 0.85rem;
+  }
+
+  .Login input,
+  .Login select {
+    font-size: 0.9rem;
+    padding: 0.8rem 0.7rem;
+    margin-bottom: 0.9rem;
+    border-radius: 0.5rem;
+  }
+
+  .Login button {
+    font-size: 1.1rem;
+    padding: 0.8rem 0;
+    border-radius: 0.5rem;
+  }
+
+  .confirmation-content {
+    max-width: 350px;
+    padding: 1.3rem 1rem;
+    border-radius: 0.6rem;
+  }
+
+  .confirmation-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .confirmation-content p {
+    font-size: 1rem;
+    margin-bottom: 1.3rem;
+  }
+
+  .confirm-btn,
+  .cancel-btn {
+    font-size: 1rem;
+    padding: 0.7rem 0;
+    border-radius: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .Login,
+  .confirmation-content {
+    padding: 1rem 0.8rem;
+  }
+
+  .Login h2 {
+    font-size: 1.2rem;
+  }
+
+  .Login input,
+  .Login select,
+  .Login button,
+  .confirm-btn,
+  .cancel-btn {
+    font-size: 1rem;
+    padding: 0.8rem 0.6rem;
+  }
+}
