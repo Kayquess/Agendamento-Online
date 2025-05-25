@@ -1,5 +1,5 @@
-📅 Agendamento Online
-Sistema completo de Agendamento Online, desenvolvido com React, TypeScript e Tailwind CSS no frontend, e Node.js com Express no backend.
+📅 Sistema Completo de Agendamento Online
+Sistema completo de agendamento online, desenvolvido com React, TypeScript e Tailwind CSS no frontend, e Node.js com Express no backend.
 
 O projeto conta com integração com MySQL para persistência de dados e oferece uma solução eficiente para agendamento de serviços, como barbearias, salões, consultórios, clínicas e outros.
 
@@ -39,11 +39,11 @@ dotenv – Gerenciamento de variáveis de ambiente
 
 bcrypt / bcryptjs – Criptografia e hash de senhas
 
-Nodemon – Hot reload no desenvolvimento
+Nodemon – Hot reload para desenvolvimento
 
 ESLint + TypeScript ESLint – Padronização e qualidade de código
 
-Concurrently – Executar frontend e backend juntos no desenvolvimento
+Simultaneamente – Executar frontend e backend juntos no desenvolvimento
 
 📦 Funcionalidades
 ✅ Cadastro de clientes
@@ -62,12 +62,14 @@ Concurrently – Executar frontend e backend juntos no desenvolvimento
 
 🔧 Como Executar o Projeto
 1️⃣ Clone o repositório
+
 bash
 Copiar
 Editar
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
 2️⃣ Instale as dependências
+
 bash
 Copiar
 Editar
@@ -75,9 +77,10 @@ npm install
 cd backend
 npm install
 3️⃣ Configure o Banco de Dados
+
 Crie um banco de dados MySQL
 
-Crie um arquivo .env dentro da pasta /backend com as seguintes variáveis:
+Crie um arquivo .env dentro da pasta /backend com as variáveis:
 
 env
 Copiar
@@ -86,76 +89,80 @@ DB_HOST=localhost
 DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
 DB_DATABASE=nome_do_banco
+
 EMAIL_USER=seu_email
 EMAIL_PASS=sua_senha_email
 4️⃣ Execute o Projeto
+
 bash
 Copiar
 Editar
 npm run dev
-🔄 Isso irá iniciar tanto o backend quanto o frontend simultaneamente.
+Isso irá iniciar tanto o backend quanto o frontend simultaneamente.
 
 🌐 Acesso
-🔗 Frontend: http://localhost:5173
+Frontend: http://localhost:5173
 
-🔗 Backend: http://localhost:3001
+Backend: http://localhost:3001
 
 📜 Licença
 Este projeto está sob a licença ISC.
 
+React + TypeScript + Vite + ESLint
+Este modelo fornece uma configuração mínima para que o React funcione no Vite com HMR e algumas regras ESLint.
 
+Atualmente, dois plugins oficiais estão disponíveis para React no Vite:
 
-# React + TypeScript + Vite
+@vitejs/plugin-react — usa Babel para atualização rápida
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+@vitejs/plugin-react-swc — usa SWC para atualização rápida
 
-Currently, two official plugins are available:
+Expandindo a configuração do ESLint
+Se estiver desenvolvendo um aplicativo de produção, recomendamos habilitar regras de lint com reconhecimento de tipo, para maior rigor e qualidade.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Exemplo de configuração usando tseslint.config:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
+ts
+Copiar
+Editar
 export default tseslint.config({
   extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
+    // Remova ...tseslint.configs.recommended e substitua por:
     ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
+    // Alternativamente, para regras mais estritas:
     ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
+    // Opcional: para regras estilísticas:
     ...tseslint.configs.stylisticTypeChecked,
   ],
   languageOptions: {
-    // other options...
     parserOptions: {
       project: ['./tsconfig.node.json', './tsconfig.app.json'],
       tsconfigRootDir: import.meta.dirname,
     },
   },
 })
-```
+ESLint Plugins específicos para React
+Para regras específicas do React, instale e configure os plugins eslint-plugin-react-x e eslint-plugin-react-dom.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Exemplo de configuração (eslint.config.js):
 
-```js
-// eslint.config.js
+ts
+Copiar
+Editar
 import reactX from 'eslint-plugin-react-x'
 import reactDom from 'eslint-plugin-react-dom'
 
 export default tseslint.config({
   plugins: {
-    // Add the react-x and react-dom plugins
+    // Adiciona os plugins react-x e react-dom
     'react-x': reactX,
     'react-dom': reactDom,
   },
   rules: {
-    // other rules...
-    // Enable its recommended typescript rules
+    // Outras regras...
+    // Habilita regras recomendadas para TypeScript do react-x
     ...reactX.configs['recommended-typescript'].rules,
+    // Habilita regras recomendadas do react-dom
     ...reactDom.configs.recommended.rules,
   },
 })
-```
