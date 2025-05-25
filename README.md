@@ -1,5 +1,7 @@
 📅 Agendamento Online
-Sistema completo de Agendamento Online, desenvolvido com React, TypeScript e Tailwind CSS no frontend, e Node.js com Express no backend. O projeto conta com integração com MySQL para persistência de dados e oferece uma solução eficiente para agendamento de serviços como barbearias, salões, consultórios, entre outros.
+Sistema completo de Agendamento Online, desenvolvido com React, TypeScript e Tailwind CSS no frontend, e Node.js com Express no backend.
+
+O projeto conta com integração com MySQL para persistência de dados e oferece uma solução eficiente para agendamento de serviços, como barbearias, salões, consultórios, clínicas e outros.
 
 🚀 Tecnologias Utilizadas
 🖥️ Frontend
@@ -9,7 +11,7 @@ TypeScript
 
 Vite – Build e Dev Server ultrarrápido
 
-Tailwind CSS – Estilização
+Tailwind CSS – Estilização moderna e eficiente
 
 React Router DOM – Navegação de rotas
 
@@ -26,31 +28,31 @@ Express
 
 MySQL2 – Banco de dados relacional
 
-Nodemailer – Envio de emails
+Nodemailer – Envio de e-mails automáticos
 
-Body-parser
+Body-parser – Manipulação de requisições
 
-CORS
+CORS – Permitir requisições externas
 
 🛠️ Ferramentas e Dependências Extras
 dotenv – Gerenciamento de variáveis de ambiente
 
-bcrypt / bcryptjs – Hash de senhas
+bcrypt / bcryptjs – Criptografia e hash de senhas
 
-Nodemon – Desenvolvimento com hot reload
+Nodemon – Hot reload no desenvolvimento
 
 ESLint + TypeScript ESLint – Padronização e qualidade de código
 
-Concurrently – Executa frontend e backend simultaneamente no modo desenvolvimento
+Concurrently – Executar frontend e backend juntos no desenvolvimento
 
 📦 Funcionalidades
 ✅ Cadastro de clientes
 
 ✅ Seleção de datas e horários disponíveis
 
-✅ Painel administrativo para gerenciar agendamentos
+✅ Painel administrativo para gerenciamento de agendamentos
 
-✅ Envio de confirmação por email
+✅ Envio de confirmação por e-mail
 
 ✅ Validação de horários e conflitos
 
@@ -58,21 +60,21 @@ Concurrently – Executa frontend e backend simultaneamente no modo desenvolvime
 
 ✅ Interface responsiva, rápida e intuitiva
 
-🔧 Como executar o projeto
-1. Clone o repositório
+🔧 Como Executar o Projeto
+1️⃣ Clone o repositório
 bash
 Copiar
 Editar
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
-2. Instale as dependências
+2️⃣ Instale as dependências
 bash
 Copiar
 Editar
 npm install
 cd backend
 npm install
-3. Configure o banco de dados
+3️⃣ Configure o Banco de Dados
 Crie um banco de dados MySQL
 
 Crie um arquivo .env dentro da pasta /backend com as seguintes variáveis:
@@ -86,21 +88,20 @@ DB_PASSWORD=sua_senha
 DB_DATABASE=nome_do_banco
 EMAIL_USER=seu_email
 EMAIL_PASS=sua_senha_email
-4. Execute o projeto
+4️⃣ Execute o Projeto
 bash
 Copiar
 Editar
 npm run dev
-Este comando inicia tanto o backend quanto o frontend simultaneamente.
+🔄 Isso irá iniciar tanto o backend quanto o frontend simultaneamente.
 
 🌐 Acesso
-Frontend: http://localhost:5173
+🔗 Frontend: http://localhost:5173
 
-Backend: http://localhost:3001
+🔗 Backend: http://localhost:3001
 
 📜 Licença
 Este projeto está sob a licença ISC.
-
 
 
 
