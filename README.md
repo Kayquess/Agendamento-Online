@@ -52,8 +52,6 @@ Sistema de agendamento online desenvolvido com **React**, **TypeScript** e **Tai
 ```bash
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
-
-
 2. Instale as dependências
 bash
 Copiar
@@ -130,4 +128,23 @@ Este projeto está licenciado sob a licença ISC.
 🤝 Contribuição
 Contribuições são bem-vindas!
 Abra uma issue ou envie um pull request.
+
+📝 Contato
+Email: seu_email@exemplo.com
+
+GitHub: seu-usuario
+
+Obrigado por usar este sistema de agendamento! 🚀
+
+css
+Copiar
+Editar
+
+Se quiser, posso ajudar a ajustar com seus dados reais, ou gerar o arquivo README.md para você. Quer que eu faça?
+
+
+
+
+
+
 
