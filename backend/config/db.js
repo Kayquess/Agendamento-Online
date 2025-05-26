@@ -1,19 +1,18 @@
-// backend/db.js
-const mysql = require('mysql2');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '123456',
-  database: 'cadastro_db',
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // importante para conexão segura com Supabase
+  },
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error('❌ Erro ao conectar ao MySQL:', err.message);
+pool.connect()
+  .then(() => console.log('✅ Conectado ao banco Supabase!'))
+  .catch((err) => {
+    console.error('❌ Erro de conexão:', err);
     process.exit(1);
-  }
-  console.log('✅ Conectado ao banco MySQL!');
-});
+  });
 
-module.exports = db;
+module.exports = pool;
