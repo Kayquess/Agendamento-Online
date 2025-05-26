@@ -52,3 +52,6 @@ Sistema de agendamento online desenvolvido com **React**, **TypeScript** e **Tai
 ```bash
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
+
+---
+2️⃣ Instale as dependências:
