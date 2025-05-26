@@ -6,7 +6,7 @@ Sistema de agendamento online desenvolvido com **React**, **TypeScript** e **Tai
 
 ## 🚀 Tecnologias Utilizadas
 
-**Frontend:**  
+**Frontend:**
 - React 19  
 - TypeScript  
 - Vite (Build e Dev Server ultrarrápido)  
@@ -53,5 +53,37 @@ Sistema de agendamento online desenvolvido com **React**, **TypeScript** e **Tai
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
 
----
-2️⃣ Instale as dependências:
+
+````
+2️⃣ Instale as dependências do frontend e backend:
+````
+npm install
+cd backend
+npm install
+
+
+````
+3️⃣ Configure o Banco de Dados MySQL
+````
+Crie um banco de dados no MySQL.
+Crie um arquivo .env dentro da pasta /backend com as variáveis:
+
+DB_HOST=localhost
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+DB_DATABASE=nome_do_banco
+EMAIL_USER=seu_email
+EMAIL_PASS=sua_senha_email
+
+````
+4️⃣ Execute o projeto (frontend e backend simultaneamente):
+````
+npm run dev
+
+````
+🌐 Acesso
+````
+Frontend: http://localhost:5173
+Backend: http://localhost:3001
+
+
