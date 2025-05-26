@@ -79,7 +79,6 @@ EMAIL_PASS=sua_senha_email
 4️⃣ Execute o projeto (frontend e backend simultaneamente):
 ````
 npm run dev
-
 ````
 🌐 Acesso
 ````
