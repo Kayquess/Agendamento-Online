@@ -1,8 +1,5 @@
-// =========================
-// 📦 Dependências
-// =========================
 import express from 'express';
-import { Pool } from 'pg';
+import mysql from 'mysql2/promise';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
@@ -11,11 +8,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// =========================
-// 🔐 Validação do .env
-// =========================
 const REQUIRED_ENV = [
-  'DATABASE_URL',
+  'DB_HOST',
+  'DB_USER',
+  'DB_PASSWORD',
+  'DB_DATABASE',
   'EMAIL_USER',
   'EMAIL_PASS',
   'FRONTEND_URL',
@@ -28,26 +25,27 @@ if (missing.length) {
   process.exit(1);
 }
 
-// =========================
-// 🗄️ Configuração do Banco PostgreSQL
-// =========================
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // necessário para Supabase
-  },
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
-pool.connect()
-  .then(() => console.log('✅ Banco PostgreSQL conectado'))
-  .catch(err => {
-    console.error('❌ Erro ao conectar no banco PostgreSQL:', err.message);
+(async () => {
+  try {
+    const conn = await pool.getConnection();
+    console.log('✅ Banco MySQL conectado');
+    conn.release();
+  } catch (err) {
+    console.error('❌ Erro ao conectar no MySQL:', err.message);
     process.exit(1);
-  });
+  }
+})();
 
-// =========================
-// 📧 Configuração do Email
-// =========================
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -66,9 +64,6 @@ const transporter = nodemailer.createTransport({
   }
 })();
 
-// =========================
-// 🚀 Inicialização do App
-// =========================
 const app = express();
 const PORT = process.env.PORT;
 
@@ -79,11 +74,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// =========================
-// 🛠️ ROTAS
-// =========================
-
-// 👉 Login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -91,8 +81,8 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
 
   try {
-    const { rows: users } = await pool.query(
-      'SELECT id, name, email, password FROM users WHERE email = $1',
+    const [users] = await pool.query(
+      'SELECT id, name, email, password FROM users WHERE email = ?',
       [email]
     );
 
@@ -113,7 +103,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// 👉 Cadastro
 app.post('/api/cadastrar', async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -121,8 +110,8 @@ app.post('/api/cadastrar', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
 
   try {
-    const { rows: exists } = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
+    const [exists] = await pool.query(
+      'SELECT id FROM users WHERE email = ?',
       [email]
     );
 
@@ -132,7 +121,7 @@ app.post('/api/cadastrar', async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     await pool.query(
-      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)',
+      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
       [name, email, hashed]
     );
 
@@ -143,7 +132,6 @@ app.post('/api/cadastrar', async (req, res) => {
   }
 });
 
-// 👉 Agendar Serviço
 app.post('/api/agendar', async (req, res) => {
   const { name, phone, service, date, time } = req.body;
 
@@ -151,8 +139,8 @@ app.post('/api/agendar', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
 
   try {
-    const { rows: conflict } = await pool.query(
-      'SELECT id FROM bookings WHERE date = $1 AND time = $2 AND service = $3',
+    const [conflict] = await pool.query(
+      'SELECT id FROM bookings WHERE date = ? AND time = ? AND service = ?',
       [date, time, service]
     );
 
@@ -160,7 +148,7 @@ app.post('/api/agendar', async (req, res) => {
       return res.status(409).json({ error: 'Horário já reservado.' });
 
     await pool.query(
-      'INSERT INTO bookings (name, phone, service, date, time) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO bookings (name, phone, service, date, time) VALUES (?, ?, ?, ?, ?)',
       [name, phone, service, date, time]
     );
 
@@ -171,7 +159,6 @@ app.post('/api/agendar', async (req, res) => {
   }
 });
 
-// 👉 Recuperação de Senha
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
 
@@ -179,8 +166,8 @@ app.post('/api/forgot-password', async (req, res) => {
     return res.status(400).json({ error: 'E-mail é obrigatório.' });
 
   try {
-    const { rows: users } = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
+    const [users] = await pool.query(
+      'SELECT id FROM users WHERE email = ?',
       [email]
     );
 
@@ -191,7 +178,7 @@ app.post('/api/forgot-password', async (req, res) => {
     const expires = new Date(Date.now() + 3600000); // 1 hora
 
     await pool.query(
-      'UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3',
+      'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?',
       [token, expires, users[0].id]
     );
 
@@ -216,7 +203,6 @@ app.post('/api/forgot-password', async (req, res) => {
   }
 });
 
-// 👉 Resetar Senha
 app.post('/api/reset-password/:token', async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
@@ -225,8 +211,8 @@ app.post('/api/reset-password/:token', async (req, res) => {
     return res.status(400).json({ error: 'Nova senha é obrigatória.' });
 
   try {
-    const { rows: users } = await pool.query(
-      'SELECT id, reset_expires FROM users WHERE reset_token = $1',
+    const [users] = await pool.query(
+      'SELECT id, reset_expires FROM users WHERE reset_token = ?',
       [token]
     );
 
@@ -241,7 +227,7 @@ app.post('/api/reset-password/:token', async (req, res) => {
     const hashed = await bcrypt.hash(newPassword, 10);
 
     await pool.query(
-      'UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2',
+      'UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?',
       [hashed, user.id]
     );
 
@@ -252,24 +238,16 @@ app.post('/api/reset-password/:token', async (req, res) => {
   }
 });
 
-// =========================
-// 🚫 Rota Não Encontrada
-// =========================
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada.' });
 });
 
-// =========================
-// 🛑 Middleware de Erro
-// =========================
 app.use((err, req, res, next) => {
   console.error('Erro não tratado:', err);
   res.status(500).json({ error: 'Erro interno no servidor.' });
 });
 
-// =========================
-// 🚀 Start Server
-// =========================
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });
