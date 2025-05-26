@@ -12,7 +12,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // =========================
-// 🔐 Validação de Variáveis .env
+// 🔐 Validação das Variáveis de Ambiente
 // =========================
 const REQUIRED_ENV = [
   'DB_HOST',
@@ -24,33 +24,32 @@ const REQUIRED_ENV = [
   'PORT',
 ];
 
-const missing = REQUIRED_ENV.filter(env => !process.env[env]);
-if (missing.length) {
-  console.error(`❌ Faltando variáveis no .env: ${missing.join(', ')}`);
+const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  console.error(`❌ Variáveis faltando no .env: ${missingEnv.join(', ')}`);
   process.exit(1);
 }
 
 // =========================
-// 🗄️ Configuração dos Bancos
+// 🗄️ Conexão com Bancos de Dados
 // =========================
-const createPool = (database) => {
+const createPool = (dbName) => {
   const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database,
+    database: dbName,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0,
   });
 
   pool.getConnection()
     .then(conn => {
-      console.log(`✅ Banco '${database}' conectado`);
+      console.log(`✅ Conectado ao banco '${dbName}'`);
       conn.release();
     })
     .catch(err => {
-      console.error(`❌ Erro ao conectar no banco '${database}':`, err.message);
+      console.error(`❌ Erro ao conectar no banco '${dbName}':`, err.message);
       process.exit(1);
     });
 
@@ -61,7 +60,7 @@ const poolCadastro = createPool('cadastro_db');
 const poolAgendamento = createPool('agendamento_db');
 
 // =========================
-// 📧 Configuração do Email
+// 📧 Configuração de E-mail (SMTP)
 // =========================
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -74,60 +73,60 @@ const transporter = nodemailer.createTransport({
 (async () => {
   try {
     await transporter.verify();
-    console.log('✅ SMTP funcionando');
+    console.log('✅ SMTP configurado com sucesso');
   } catch (error) {
-    console.error('❌ Erro SMTP:', error);
+    console.error('❌ Erro na configuração SMTP:', error);
     process.exit(1);
   }
 })();
 
 // =========================
-// 🚀 Inicialização do App
+// 🚀 Configuração do Servidor
 // =========================
 const app = express();
-const port = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors({
   origin: process.env.FRONTEND_URL,
   credentials: true,
 }));
-
 app.use(express.json());
 
 // =========================
-// 🛠️ ROTAS
+// 🔑 Rotas de Autenticação
 // =========================
 
-// 👉 Login
+// 🔐 Login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
+
   if (!email || !password)
     return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
 
   try {
-    const [rows] = await poolCadastro.query(
+    const [users] = await poolCadastro.query(
       'SELECT id, name, email, password FROM users WHERE email = ?',
       [email]
     );
 
-    if (!rows.length)
+    if (!users.length)
       return res.status(404).json({ error: 'Usuário não encontrado.' });
 
-    const user = rows[0];
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const user = users[0];
 
-    if (!isValidPassword)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid)
       return res.status(401).json({ error: 'Senha incorreta.' });
 
     delete user.password;
     res.json({ user });
-  } catch (error) {
-    console.error('Erro no login:', error);
-    res.status(500).json({ error: 'Erro interno no login.' });
+  } catch (err) {
+    console.error('❌ Erro no login:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
   }
 });
 
-// 👉 Cadastro
+// 🔐 Cadastro
 app.post('/api/cadastrar', async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -135,12 +134,12 @@ app.post('/api/cadastrar', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
 
   try {
-    const [exists] = await poolCadastro.query(
+    const [existing] = await poolCadastro.query(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );
 
-    if (exists.length)
+    if (existing.length)
       return res.status(409).json({ error: 'E-mail já cadastrado.' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -151,13 +150,15 @@ app.post('/api/cadastrar', async (req, res) => {
     );
 
     res.status(201).json({ message: 'Cadastro realizado com sucesso!' });
-  } catch (error) {
-    console.error('Erro no cadastro:', error);
-    res.status(500).json({ error: 'Erro interno no cadastro.' });
+  } catch (err) {
+    console.error('❌ Erro no cadastro:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
   }
 });
 
-// 👉 Agendar Serviço
+// =========================
+// 📅 Rotas de Agendamento
+// =========================
 app.post('/api/agendar', async (req, res) => {
   const { name, phone, service, date, time } = req.body;
 
@@ -179,15 +180,20 @@ app.post('/api/agendar', async (req, res) => {
     );
 
     res.status(201).json({ message: 'Agendamento realizado com sucesso!' });
-  } catch (error) {
-    console.error('Erro no agendamento:', error);
-    res.status(500).json({ error: 'Erro interno no agendamento.' });
+  } catch (err) {
+    console.error('❌ Erro no agendamento:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
   }
 });
 
-// 👉 Recuperação de Senha
+// =========================
+// 🔄 Recuperação e Redefinição de Senha
+// =========================
+
+// 🔗 Enviar Link de Recuperação
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
+
   if (!email)
     return res.status(400).json({ error: 'E-mail é obrigatório.' });
 
@@ -201,7 +207,7 @@ app.post('/api/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 3600000); // 1 hora
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
     await poolCadastro.query(
       'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?',
@@ -216,21 +222,21 @@ app.post('/api/forgot-password', async (req, res) => {
       subject: 'Recuperação de senha',
       html: `
         <h2>Recuperação de senha</h2>
-        <p>Clique no link abaixo para redefinir sua senha. O link é válido por 1 hora:</p>
+        <p>Clique no link abaixo para redefinir sua senha. O link expira em 1 hora:</p>
         <a href="${resetLink}">${resetLink}</a>
         <br/><br/>
-        <p>Se você não solicitou, ignore este e-mail.</p>
+        <p>Se você não solicitou isso, ignore este e-mail.</p>
       `,
     });
 
     res.json({ message: 'E-mail de recuperação enviado com sucesso.' });
-  } catch (error) {
-    console.error('Erro no envio do e-mail:', error);
-    res.status(500).json({ error: 'Erro interno no envio do e-mail.' });
+  } catch (err) {
+    console.error('❌ Erro no envio de recuperação de senha:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
   }
 });
 
-// 👉 Resetar Senha
+// 🔐 Redefinir Senha
 app.post('/api/reset-password/:token', async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
@@ -249,10 +255,7 @@ app.post('/api/reset-password/:token', async (req, res) => {
 
     const user = users[0];
 
-    const now = new Date();
-    const expires = new Date(user.reset_expires);
-
-    if (now > expires)
+    if (new Date() > new Date(user.reset_expires))
       return res.status(400).json({ error: 'Token expirado.' });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -263,14 +266,14 @@ app.post('/api/reset-password/:token', async (req, res) => {
     );
 
     res.json({ message: 'Senha redefinida com sucesso!' });
-  } catch (error) {
-    console.error('Erro ao redefinir a senha:', error);
-    res.status(500).json({ error: 'Erro interno na redefinição de senha.' });
+  } catch (err) {
+    console.error('❌ Erro ao redefinir senha:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
   }
 });
 
 // =========================
-// 🚫 Rota Não Encontrada
+// 🚫 Rota 404 - Não Encontrada
 // =========================
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada.' });
@@ -280,13 +283,13 @@ app.use((req, res) => {
 // 🛑 Middleware Global de Erro
 // =========================
 app.use((err, req, res, next) => {
-  console.error('Erro não tratado:', err);
+  console.error('❌ Erro não tratado:', err);
   res.status(500).json({ error: 'Erro interno no servidor.' });
 });
 
 // =========================
 // 🚀 Iniciar Servidor
 // =========================
-app.listen(port, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });
