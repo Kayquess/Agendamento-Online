@@ -11,8 +11,9 @@ dotenv.config();
 const REQUIRED_ENV = [
   'DB_HOST',
   'DB_USER',
-  'DB_PASSWORD',
-  'DB_DATABASE',
+  'DB_PASS',
+  'DB_CADASTRO',
+  'DB_AGENDAR',
   'EMAIL_USER',
   'EMAIL_PASS',
   'FRONTEND_URL',
@@ -25,11 +26,21 @@ if (missing.length) {
   process.exit(1);
 }
 
-const pool = mysql.createPool({
+const poolCadastro = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASS,
+  database: process.env.DB_CADASTRO,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+
+const poolAgendar = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_AGENDAR,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -37,11 +48,15 @@ const pool = mysql.createPool({
 
 (async () => {
   try {
-    const conn = await pool.getConnection();
-    console.log('✅ Banco MySQL conectado');
-    conn.release();
+    const conn1 = await poolCadastro.getConnection();
+    console.log('✅ Conectado ao banco de cadastro');
+    conn1.release();
+
+    const conn2 = await poolAgendar.getConnection();
+    console.log('✅ Conectado ao banco de agendamento');
+    conn2.release();
   } catch (err) {
-    console.error('❌ Erro ao conectar no MySQL:', err.message);
+    console.error('❌ Erro na conexão com os bancos:', err.message);
     process.exit(1);
   }
 })();
@@ -81,7 +96,7 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
 
   try {
-    const [users] = await pool.query(
+    const [users] = await poolCadastro.query(
       'SELECT id, name, email, password FROM users WHERE email = ?',
       [email]
     );
@@ -110,7 +125,7 @@ app.post('/api/cadastrar', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
 
   try {
-    const [exists] = await pool.query(
+    const [exists] = await poolCadastro.query(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );
@@ -120,7 +135,7 @@ app.post('/api/cadastrar', async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await pool.query(
+    await poolCadastro.query(
       'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
       [name, email, hashed]
     );
@@ -132,33 +147,6 @@ app.post('/api/cadastrar', async (req, res) => {
   }
 });
 
-app.post('/api/agendar', async (req, res) => {
-  const { name, phone, service, date, time } = req.body;
-
-  if (!name || !phone || !service || !date || !time)
-    return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
-
-  try {
-    const [conflict] = await pool.query(
-      'SELECT id FROM bookings WHERE date = ? AND time = ? AND service = ?',
-      [date, time, service]
-    );
-
-    if (conflict.length)
-      return res.status(409).json({ error: 'Horário já reservado.' });
-
-    await pool.query(
-      'INSERT INTO bookings (name, phone, service, date, time) VALUES (?, ?, ?, ?, ?)',
-      [name, phone, service, date, time]
-    );
-
-    res.status(201).json({ message: 'Agendamento realizado com sucesso!' });
-  } catch (err) {
-    console.error('Erro no agendamento:', err);
-    res.status(500).json({ error: 'Erro interno no agendamento.' });
-  }
-});
-
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
 
@@ -166,7 +154,7 @@ app.post('/api/forgot-password', async (req, res) => {
     return res.status(400).json({ error: 'E-mail é obrigatório.' });
 
   try {
-    const [users] = await pool.query(
+    const [users] = await poolCadastro.query(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );
@@ -175,9 +163,9 @@ app.post('/api/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 3600000); // 1 hora
+    const expires = new Date(Date.now() + 3600000);
 
-    await pool.query(
+    await poolCadastro.query(
       'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?',
       [token, expires, users[0].id]
     );
@@ -211,7 +199,7 @@ app.post('/api/reset-password/:token', async (req, res) => {
     return res.status(400).json({ error: 'Nova senha é obrigatória.' });
 
   try {
-    const [users] = await pool.query(
+    const [users] = await poolCadastro.query(
       'SELECT id, reset_expires FROM users WHERE reset_token = ?',
       [token]
     );
@@ -226,7 +214,7 @@ app.post('/api/reset-password/:token', async (req, res) => {
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
-    await pool.query(
+    await poolCadastro.query(
       'UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?',
       [hashed, user.id]
     );
@@ -238,6 +226,32 @@ app.post('/api/reset-password/:token', async (req, res) => {
   }
 });
 
+app.post('/api/agendar', async (req, res) => {
+  const { name, phone, service, date, time } = req.body;
+
+  if (!name || !phone || !service || !date || !time)
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+
+  try {
+    const [conflict] = await poolAgendar.query(
+      'SELECT id FROM bookings WHERE date = ? AND time = ? AND service = ?',
+      [date, time, service]
+    );
+
+    if (conflict.length)
+      return res.status(409).json({ error: 'Horário já reservado.' });
+
+    await poolAgendar.query(
+      'INSERT INTO bookings (name, phone, service, date, time) VALUES (?, ?, ?, ?, ?)',
+      [name, phone, service, date, time]
+    );
+
+    res.status(201).json({ message: 'Agendamento realizado com sucesso!' });
+  } catch (err) {
+    console.error('Erro no agendamento:', err);
+    res.status(500).json({ error: 'Erro interno no agendamento.' });
+  }
+});
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada.' });
