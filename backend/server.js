@@ -2,7 +2,7 @@
 // 📦 Dependências
 // =========================
 import express from 'express';
-import mysql from 'mysql2/promise';
+import { Pool } from 'pg';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
@@ -15,9 +15,7 @@ dotenv.config();
 // 🔐 Validação do .env
 // =========================
 const REQUIRED_ENV = [
-  'DB_HOST',
-  'DB_USER',
-  'DB_PASS',
+  'DATABASE_URL',
   'EMAIL_USER',
   'EMAIL_PASS',
   'FRONTEND_URL',
@@ -31,36 +29,21 @@ if (missing.length) {
 }
 
 // =========================
-// 🗄️ Configuração dos Bancos
+// 🗄️ Configuração do Banco PostgreSQL
 // =========================
-const createPool = (database) => {
-  const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // necessário para Supabase
+  },
+});
+
+pool.connect()
+  .then(() => console.log('✅ Banco PostgreSQL conectado'))
+  .catch(err => {
+    console.error('❌ Erro ao conectar no banco PostgreSQL:', err.message);
+    process.exit(1);
   });
-
-  pool.getConnection()
-    .then(conn => {
-      console.log(`✅ Banco '${database}' conectado`);
-      conn.release();
-    })
-    .catch(err => {
-      console.error(`❌ Erro ao conectar no banco '${database}':`, err.message);
-      process.exit(1);
-    });
-
-  return pool;
-};
-
-const db = {
-  cadastro: createPool('cadastro_db'),
-  agendamento: createPool('agendamento_db'),
-};
 
 // =========================
 // 📧 Configuração do Email
@@ -87,7 +70,7 @@ const transporter = nodemailer.createTransport({
 // 🚀 Inicialização do App
 // =========================
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 app.use(cors({
   origin: process.env.FRONTEND_URL,
@@ -108,8 +91,8 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
 
   try {
-    const [users] = await db.cadastro.query(
-      'SELECT id, name, email, password FROM users WHERE email = ?',
+    const { rows: users } = await pool.query(
+      'SELECT id, name, email, password FROM users WHERE email = $1',
       [email]
     );
 
@@ -138,8 +121,8 @@ app.post('/api/cadastrar', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
 
   try {
-    const [exists] = await db.cadastro.query(
-      'SELECT id FROM users WHERE email = ?',
+    const { rows: exists } = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
       [email]
     );
 
@@ -148,8 +131,8 @@ app.post('/api/cadastrar', async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await db.cadastro.query(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+    await pool.query(
+      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)',
       [name, email, hashed]
     );
 
@@ -168,16 +151,16 @@ app.post('/api/agendar', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
 
   try {
-    const [conflict] = await db.agendamento.query(
-      'SELECT id FROM bookings WHERE date = ? AND time = ? AND service = ?',
+    const { rows: conflict } = await pool.query(
+      'SELECT id FROM bookings WHERE date = $1 AND time = $2 AND service = $3',
       [date, time, service]
     );
 
     if (conflict.length)
       return res.status(409).json({ error: 'Horário já reservado.' });
 
-    await db.agendamento.query(
-      'INSERT INTO bookings (name, phone, service, date, time) VALUES (?, ?, ?, ?, ?)',
+    await pool.query(
+      'INSERT INTO bookings (name, phone, service, date, time) VALUES ($1, $2, $3, $4, $5)',
       [name, phone, service, date, time]
     );
 
@@ -196,8 +179,8 @@ app.post('/api/forgot-password', async (req, res) => {
     return res.status(400).json({ error: 'E-mail é obrigatório.' });
 
   try {
-    const [users] = await db.cadastro.query(
-      'SELECT id FROM users WHERE email = ?',
+    const { rows: users } = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
       [email]
     );
 
@@ -207,8 +190,8 @@ app.post('/api/forgot-password', async (req, res) => {
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 3600000); // 1 hora
 
-    await db.cadastro.query(
-      'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?',
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3',
       [token, expires, users[0].id]
     );
 
@@ -242,8 +225,8 @@ app.post('/api/reset-password/:token', async (req, res) => {
     return res.status(400).json({ error: 'Nova senha é obrigatória.' });
 
   try {
-    const [users] = await db.cadastro.query(
-      'SELECT id, reset_expires FROM users WHERE reset_token = ?',
+    const { rows: users } = await pool.query(
+      'SELECT id, reset_expires FROM users WHERE reset_token = $1',
       [token]
     );
 
@@ -257,8 +240,8 @@ app.post('/api/reset-password/:token', async (req, res) => {
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
-    await db.cadastro.query(
-      'UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?',
+    await pool.query(
+      'UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2',
       [hashed, user.id]
     );
 
