@@ -60,8 +60,6 @@ cd seu-repositorio
 npm install
 cd backend
 npm install
-
-
 ````
 3️⃣ Configure o Banco de Dados MySQL
 ````
@@ -74,7 +72,6 @@ DB_PASSWORD=sua_senha
 DB_DATABASE=nome_do_banco
 EMAIL_USER=seu_email
 EMAIL_PASS=sua_senha_email
-
 ````
 4️⃣ Execute o projeto (frontend e backend simultaneamente):
 ````
