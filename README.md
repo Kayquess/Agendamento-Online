@@ -85,5 +85,43 @@ npm run dev
 ````
 Frontend: http://localhost:5173
 Backend: http://localhost:3001
+````
+🛠 Configuração ESLint para React + TypeScript + Vite
 
+Recomenda-se usar o seguinte para regras de lint com reconhecimento de tipos:
+````
+export default tseslint.config({
+  extends: [
+    ...tseslint.configs.recommendedTypeChecked,
+    ...tseslint.configs.strictTypeChecked,
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
 
+````
+Plugins recomendados para React:
+````
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config({
+  plugins: {
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+
+````
+📜 Licença
+
+Este projeto está sob a licença ISC.
